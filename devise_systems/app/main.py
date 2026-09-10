@@ -1,5 +1,8 @@
 from fastapi import FastAPI, Request
 from app.routes.user_routes import router
+from database import create_tables
+
+
 
 app = FastAPI(
     title="device_systems",
@@ -20,3 +23,5 @@ async def agregar_cabeceras(request: Request, call_next):
 
 
 app.include_router(router)
+
+create_tables() 

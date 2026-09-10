@@ -1,62 +1,58 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, Path
 from app.schemas.user_schema import UserCreate, UserResponse, UserUpdate
+from app.models.user import User
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from database import get_db
 
 router = APIRouter(
     prefix="/users",
     tags=["Users"]
 )
 
-# Base de datos temporal
-base_datos = [
-    {
-        "id": 1,
-        "name": "Paula",
-        "email": "paula@gmail.com",
-        "role": "admin",
-        "is_active": True
-    },
-    {
-        "id": 2,
-        "name": "Carlos",
-        "email": "carlos@gmail.com",
-        "role": "support",
-        "is_active": True
-    },
-    {
-        "id": 3,
-        "name": "Ana",
-        "email": "ana@gmail.com",
-        "role": "admin",
-        "is_active": False
-    },
-    {
-        "id": 4,
-        "name": "Cristian",
-        "email": "cristian@gmail.com",
-        "role": "admin",
-        "is_active": False
-    }
-]
+@router.post("/", response_model=UserResponse, status_code=201)
+def crear_usuario(data: UserCreate, db: Session = Depends(get_db)):
+    nuevo_usuario = User(
+        name=data.name,
+        email=data.email,
+        role=data.role,
+        is_active=data.is_active
+    )
 
+    db.add(nuevo_usuario)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="El correo electrónico ya está registrado"
+        )
+
+    db.refresh(nuevo_usuario)
+
+    return nuevo_usuario
 
 @router.get("/", response_model=list[UserResponse])
 def obtener_usuarios(
     role: str | None = Query(default=None),
-    is_active: bool | None = Query(default=None)
+    is_active: bool | None = Query(default=None),
+    db: Session = Depends(get_db)
 ):
 
-    usuarios = base_datos
+    usuarios = db.query(User).all()
 
     if role is not None:
         usuarios = [
             usuario for usuario in usuarios
-            if usuario["role"] == role
+            if usuario.role == role
         ]
 
     if is_active is not None:
         usuarios = [
             usuario for usuario in usuarios
-            if usuario["is_active"] == is_active
+            if usuario.is_active == is_active
         ]
 
     if not usuarios:
@@ -68,92 +64,82 @@ def obtener_usuarios(
     return usuarios
 
 @router.get("/{id}", response_model=UserResponse)
-def obtener_usuario(id: int):
-    for usuario in base_datos:
-        if usuario["id"] == id:
-            return usuario
-
-    raise HTTPException(
-        status_code=404,
-        detail="Usuario no encontrado"
-    )
-
-
-@router.post("/", response_model=UserResponse, status_code=201)
-def crear_usuario(usuario: UserCreate):
-
-    for usuario_existente in base_datos:
-        if usuario_existente["email"] == usuario.email:
-            raise HTTPException(
-                status_code=400,
-                detail="El correo electrónico ya está registrado"
-            )
-
-    nuevo_id = max([usuario["id"] for usuario in base_datos], default=0) + 1
-
-    nuevo_usuario = {
-        "id": nuevo_id,
-        "name": usuario.name,
-        "email": usuario.email,
-        "role": usuario.role,
-        "is_active": usuario.is_active
-    }
-
-    base_datos.append(nuevo_usuario)
-
-    return nuevo_usuario
+def obtener_usuario(id: int = Path(..., gt=0), db: Session = Depends(get_db)):
+    usuario = db.query(User).get(id)
+    if not usuario:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
+    return usuario
 
 @router.put("/{id}", response_model=UserResponse)
-def actualizar_usuario(id: int, usuario: UserCreate):
-    for usuario_existente in base_datos:
-        if usuario_existente["id"] == id:
-            usuario_existente["name"] = usuario.name
-            usuario_existente["email"] = usuario.email
-            usuario_existente["role"] = usuario.role
-            usuario_existente["is_active"] = usuario.is_active
+def actualizar_usuario(
+    usuario: UserCreate,
+    id: int = Path(..., gt=0),
+    db: Session = Depends(get_db)
+):
+    usuario_existente = obtener_usuario(id, db)
 
-            return usuario_existente
+    usuario_existente.name = usuario.name
+    usuario_existente.email = usuario.email
+    usuario_existente.role = usuario.role
+    usuario_existente.is_active = usuario.is_active
 
-    raise HTTPException(
-        status_code=404,
-        detail="Usuario no encontrado"
-    )
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="El correo electrónico ya está registrado"
+        )
+    db.refresh(usuario_existente)
+
+    return usuario_existente
 
 @router.patch("/{id}", response_model=UserResponse)
-def actualizar_usuario_parcial(id: int, usuario: UserUpdate):
-    for usuario_existente in base_datos:
-        if usuario_existente["id"] == id:
+def actualizar_usuario_parcial(
+    usuario: UserUpdate,
+    id: int = Path(..., gt=0),
+    db: Session = Depends(get_db)
+):
+    if not usuario.model_dump(exclude_unset=True):
+        raise HTTPException(
+            status_code=400,
+            detail="Debe enviar al menos un campo para actualizar"
+        )
 
-            if usuario.name is not None:
-                usuario_existente["name"] = usuario.name
+    usuario_existente = obtener_usuario(id, db)
 
-            if usuario.email is not None:
-                usuario_existente["email"] = usuario.email
+    if usuario.name is not None:
+        usuario_existente.name = usuario.name
 
-            if usuario.role is not None:
-                usuario_existente["role"] = usuario.role
+    if usuario.email is not None:
+        usuario_existente.email = usuario.email
 
-            if usuario.is_active is not None:
-                usuario_existente["is_active"] = usuario.is_active
+    if usuario.role is not None:
+        usuario_existente.role = usuario.role
 
-            return usuario_existente
+    if usuario.is_active is not None:
+        usuario_existente.is_active = usuario.is_active
 
-    raise HTTPException(
-        status_code=404,
-        detail="Usuario no encontrado"
-    )
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="El correo electrónico ya está registrado"
+        )
+    db.refresh(usuario_existente)
+
+    return usuario_existente
 
 @router.delete("/{id}")
-def eliminar_usuario(id: int):
-    for usuario in base_datos:
-        if usuario["id"] == id:
-            base_datos.remove(usuario)
+def eliminar_usuario(id: int = Path(..., gt=0), db: Session = Depends(get_db)):
+    usuario_existente = obtener_usuario(id, db)
+    db.delete(usuario_existente)
+    db.commit()
 
-            return {
-                "message": "Usuario eliminado correctamente"
-            }
-
-    raise HTTPException(
-        status_code=404,
-        detail="Usuario no encontrado"
-    )
+    return {"message": "Usuario eliminado"}

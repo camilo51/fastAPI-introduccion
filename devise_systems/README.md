@@ -1,624 +1,356 @@
-# API REST de Usuarios con FastAPI
+# Device Systems
 
-## Descripción
+API REST para la gestión de usuarios desarrollada con Python, FastAPI, Pydantic y SQLAlchemy.
 
-Este proyecto consiste en el desarrollo de una **API REST para la gestión de usuarios**, construida utilizando **Python y FastAPI**.
+Este proyecto forma parte del repositorio de aprendizaje de Cristian Camilo Pereira Florez para el programa de Análisis y Desarrollo de Software del SENA.
 
-La aplicación permite consultar, filtrar y registrar usuarios mediante diferentes endpoints HTTP. Para este proyecto se utiliza una lista de Python como 
-**base de datos temporal**, por lo que la información se mantiene únicamente mientras la aplicación se encuentra en ejecución.
+## Características
 
-El proyecto está estructurado de manera modular, separando las rutas de la API y los esquemas de validación de datos.
+- API construida con FastAPI.
+- Documentación automática con Swagger y ReDoc.
+- CRUD completo para usuarios.
+- Validación de datos con Pydantic.
+- Persistencia de usuarios en SQLite mediante SQLAlchemy.
+- Filtros de usuarios por rol y estado.
+- Control de correo electrónico duplicado.
+- Middleware que agrega cabeceras informativas a las respuestas.
 
----
+## Requisitos
 
+- Python 3.10 o superior.
+- Git, para descargar el repositorio.
+
+Las dependencias de Python están definidas en `requirements.txt`.
+
+## Descargar el proyecto
+
+Desde una terminal, ejecuta:
+
+```bash
+git clone https://github.com/camilo51/fastAPI-introduccion.git
+cd fastAPI-introduccion/devise_systems
+```
+
+Si ya descargaste el repositorio, solo debes entrar a la carpeta del proyecto:
+
+```bash
+cd devise_systems
+```
+
+## Instalación
+
+### Windows PowerShell
+
+Desde la carpeta `devise_systems`, crea un entorno virtual:
+
+```powershell
+py -m venv .venv
+```
+
+Actívalo:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Si PowerShell impide la activación de scripts, puedes ejecutar:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+Instala las dependencias:
+
+```powershell
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### Linux o macOS
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+## Ejecutar la aplicación
+
+Con el entorno virtual activo y ubicado en la carpeta `devise_systems`, ejecuta:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+La API estará disponible en:
+
+```text
+http://127.0.0.1:8000
+```
+
+Para detener el servidor, presiona `Ctrl + C`.
+
+## Documentación interactiva
+
+FastAPI genera automáticamente las siguientes páginas:
+
+- Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+
+Desde Swagger UI puedes consultar y probar los endpoints sin utilizar otra herramienta.
 
 ## Estructura del proyecto
 
 ```text
 devise_systems/
-│
 ├── app/
 │   ├── main.py
-│   │
+│   ├── models/
+│   │   ├── curso.py
+│   │   ├── inscripcion.py
+│   │   └── user.py
 │   ├── routes/
+│   │   ├── curso_routes.py
 │   │   └── user_routes.py
-│   │
 │   └── schemas/
+│       ├── curso_schema.py
 │       └── user_schema.py
-│
+├── images/
+├── database.py
+├── requirements.txt
 ├── .gitignore
-├── README.md
-└── venv/
+└── README.md
 ```
 
-### Descripción de los archivos
+### Descripción de los archivos y carpetas
 
 #### `app/main.py`
 
-Es el archivo principal de la aplicación.
-
-En este archivo se:
-
-* Crea la instancia de FastAPI.
-* Configura el nombre, descripción y versión de la API.
-* Define un middleware HTTP.
-* Agregan las rutas de usuarios mediante `include_router()`.
+Es el punto de entrada de la aplicación. Crea la instancia de FastAPI, registra el router de usuarios, configura el middleware y ejecuta la creación de las tablas de la base de datos.
 
 #### `app/routes/user_routes.py`
 
-Contiene los endpoints relacionados con la gestión de usuarios.
+Contiene las rutas HTTP para crear, consultar, actualizar y eliminar usuarios. El router utiliza el prefijo `/users`.
 
-También contiene actualmente una lista llamada `base_datos`, utilizada como almacenamiento temporal de los usuarios.
+#### `app/routes/curso_routes.py`
+
+Actualmente está reservado para las rutas de cursos, pero todavía no contiene endpoints y no está registrado en `main.py`.
 
 #### `app/schemas/user_schema.py`
 
-Contiene los modelos de datos utilizados para validar la información recibida y enviada por la API.
+Contiene los esquemas Pydantic utilizados para validar los datos de entrada y salida de usuarios:
 
-Se utilizan:
+- `UserCreate`: datos necesarios para crear un usuario.
+- `UserResponse`: estructura de respuesta de un usuario.
+- `UserUpdate`: campos opcionales para una actualización parcial.
 
-* `BaseModel`
-* `EmailStr`
-* `Field`
-* `Literal`
+#### `app/schemas/curso_schema.py`
+
+Contiene los esquemas Pydantic preparados para cursos (`CursoBase`, `CursoCreate` y `Curso`).
+
+#### `app/models/user.py`
+
+Define el modelo SQLAlchemy `User` y la tabla `users` de SQLite.
+
+#### `app/models/curso.py` y `app/models/inscripcion.py`
+
+Definen los modelos SQLAlchemy para cursos e inscripciones. Actualmente son estructuras preparadas para una ampliación futura.
+
+#### `database.py`
+
+Configura SQLAlchemy, la sesión de base de datos y la conexión SQLite. La función `create_tables()` crea las tablas registradas en los modelos.
+
+#### `images/`
+
+Contiene capturas de pantalla de pruebas, validaciones y respuestas de la API.
+
+#### `requirements.txt`
+
+Lista las dependencias necesarias para ejecutar el proyecto:
+
+- `fastapi`
+- `uvicorn`
+- `email-validator`
+- `sqlalchemy`
 
 #### `.gitignore`
 
-Define archivos y carpetas que no deben ser enviados al repositorio Git, como:
+Evita subir al repositorio entornos virtuales, caché de Python, configuraciones locales, archivos de IDE y logs.
 
-* Entornos virtuales.
-* Caché de Python.
-* Archivos `.env`.
-* Configuraciones de IDE.
-* Logs.
+## Base de datos
 
----
+La aplicación utiliza SQLite con la configuración definida en `database.py`:
+
+```python
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+```
+
+El archivo `test.db` se crea en la carpeta del proyecto cuando se inicia la aplicación. Las tablas se crean automáticamente mediante `create_tables()`.
+
+La base de datos es local y está destinada al desarrollo. No se utiliza un servidor externo de base de datos.
 
 ## Modelo de usuario
 
-Los usuarios manejados por la API contienen los siguientes atributos:
+| Campo | Tipo | Requerido | Descripción |
+|---|---|---:|---|
+| `id` | Integer | Sí, automático | Identificador único |
+| `name` | String | Sí | Nombre entre 3 y 100 caracteres |
+| `email` | Email | Sí | Correo válido, normalizado y único |
+| `role` | String | Sí | `admin`, `support` o `user` |
+| `is_active` | Boolean | Sí | Estado del usuario |
 
-| Campo       | Tipo    | Descripción                      |
-| ----------- | ------- | -------------------------------- |
-| `id`        | Integer | Identificador único del usuario  |
-| `name`      | String  | Nombre del usuario               |
-| `email`     | Email   | Correo electrónico               |
-| `role`      | String  | Rol del usuario                  |
-| `is_active` | Boolean | Indica si el usuario está activo |
+## Endpoints de usuarios
 
-Los roles permitidos son:
+Todos los endpoints utilizan el prefijo `/users`.
 
-* `admin`
-* `support`
-* `user`
-
-Además, el nombre debe contener como mínimo **3 caracteres** y el correo debe cumplir con un formato válido.
-
----
-
-
-# Endpoints
-
-Todos los endpoints relacionados con usuarios utilizan el prefijo:
-
-```text
-/users
-```
-
----
-
-## 1. Obtener todos los usuarios
-
-### Método
-
-```http
-GET /users/
-```
-
-Obtiene todos los usuarios registrados.
-
-### Ejemplo
-
-```http
-GET http://127.0.0.1:8000/users/
-```
-
-### Respuesta
-
-```json
-[
-    {
-        "id": 1,
-        "name": "Paula",
-        "email": "paula@gmail.com",
-        "role": "admin",
-        "is_active": true
-    }
-]
-```
-
----
-
-## 2. Filtrar usuarios por rol
-
-### Método
-
-```http
-GET /users/?role=admin
-```
-
-Permite obtener únicamente los usuarios que tengan un determinado rol.
-
-### Roles disponibles
-
-```text
-admin
-support
-user
-```
-
-### Ejemplo
-
-```http
-GET /users/?role=admin
-```
-
----
-
-## 3. Filtrar usuarios por estado
-
-También es posible filtrar los usuarios mediante el parámetro `is_active`.
-
-### Usuarios activos
-
-```http
-GET /users/?is_active=true
-```
-
-### Usuarios inactivos
-
-```http
-GET /users/?is_active=false
-```
-
----
-
-## 4. Combinar filtros
-
-Los parámetros pueden utilizarse simultáneamente.
-
-Por ejemplo:
-
-```http
-GET /users/?role=admin&is_active=true
-```
-
-Esta consulta devuelve únicamente los usuarios que:
-
-* Tienen el rol `admin`.
-* Se encuentran activos.
-
----
-
-## 5. Obtener un usuario por ID
-
-### Método
-
-```http
-GET /users/{id}
-```
-
-Permite consultar un usuario específico utilizando su identificador.
-
-### Ejemplo
-
-```http
-GET /users/1
-```
-
-### Respuesta
-
-```json
-{
-    "id": 1,
-    "name": "Paula",
-    "email": "paula@gmail.com",
-    "role": "admin",
-    "is_active": true
-}
-```
-
-Si el ID no existe, la API devuelve:
-
-```json
-{
-    "detail": "Usuario no encontrado"
-}
-```
-
-con código HTTP:
-
-```text
-404 Not Found
-```
-
----
-
-## 6. Crear un usuario
-
-### Método
+### Crear un usuario
 
 ```http
 POST /users/
 ```
 
-Permite registrar un nuevo usuario.
-
-### Body
+Solicitud:
 
 ```json
 {
-    "name": "Laura",
-    "email": "laura@gmail.com",
-    "role": "user",
-    "is_active": true
+  "name": "Laura",
+  "email": "laura@gmail.com",
+  "role": "user",
+  "is_active": true
 }
 ```
 
-### Respuesta
-
-La API genera automáticamente el ID del nuevo usuario.
+Respuesta `201 Created`:
 
 ```json
 {
-    "id": 5,
-    "name": "Laura",
-    "email": "laura@gmail.com",
-    "role": "user",
-    "is_active": true
+  "id": 1,
+  "name": "Laura",
+  "email": "laura@gmail.com",
+  "role": "user",
+  "is_active": true
 }
 ```
 
-El código de respuesta es:
+### Obtener todos los usuarios
 
-```text
-201 Created
+```http
+GET /users/
 ```
 
----
+Admite los filtros opcionales `role` e `is_active`:
 
-## 7. Actualizar un usuario con PUT
+```http
+GET /users/?role=admin
+GET /users/?is_active=true
+GET /users/?role=admin&is_active=true
+```
 
-### Metodo 
+### Obtener un usuario por ID
+
+```http
+GET /users/{id}
+```
+
+Ejemplo:
+
+```http
+GET /users/1
+```
+
+### Actualizar completamente un usuario
 
 ```http
 PUT /users/{id}
 ```
 
-permite actualizar los datos completos de un usuario existente.
-
-### Body
+Debe enviar todos los campos del usuario:
 
 ```json
 {
-    "name": "Paula Actualizada",
-    "email": "paula.actualizada@gmail.com",
-    "role": "support",
-    "is_active": false
+  "name": "Laura Actualizada",
+  "email": "laura.actualizada@gmail.com",
+  "role": "support",
+  "is_active": true
 }
 ```
 
-## Respuesta
+### Actualizar parcialmente un usuario
 
-```json
-{
-    "id": 1,
-    "name": "Paula Actualizada",
-    "email": "paula.actualizada@gmail.com",
-    "role": "support",
-    "is_active": false
-}
-```
-
-El código de respuesta es:
-
-```text
-200 ok 
-```
-
-Si el usuario no existe la API devuelve:
-
-```json
-{
-     "detail": "Usuario no encontrado"
-}
-```
-
-Con código:
-
-```text
-404 Not Found
-```
-
----
-
-## 8. Actualizar parcialmente un usuario con PATCH
-
-Permite enviar únicamente los campos que se desean modificar. Los demás datos permanecen sin cambios.
-
-### Metodo 
-
-```http 
+```http
 PATCH /users/{id}
 ```
 
-## Body 
+Solo es necesario enviar los campos que se desean cambiar:
 
-```json 
+```json
 {
-    "name": "Carlos Actualizado"
+  "name": "Laura Modificada"
 }
 ```
 
-## Respuesta
+### Eliminar un usuario
 
-```json 
-{
-    "id": 2,
-    "name": "Carlos Actualizado",
-    "email": "carlos@gmail.com",
-    "role": "support",
-    "is_active": true
-}
-```
-
-El código de respuesta es:
-
-```text
-200 ok 
-```
-
-Si el usuario no existe, la API devuelve:
-
-```json 
-{
-    "detail": "Usuario no encontrado"
-}
-```
-
-Con código:
-
-```text
-404 Not Found
-```
-
----
-
-### 9. Eliminar un usuario con DELETE
-
-permite eliminar un usuario de la base de datos temporal.
-
-## Metodo 
-
-```http 
+```http
 DELETE /users/{id}
 ```
 
-```http 
-DELETE /users/4
-```
-
-## Respuesta 
-
-```json 
-{
-    "message": "Usuario eliminado correctamente"
-}
-```
-
-El código de respuesta es: 
-
-```text 
-200 OK
-```
----
-
-## Diferencia entre PUT y PATCH
-
-| Método |                 Fucion                   |
-|--------|------------------------------------------|
-|  PUT	 | Actualiza todos los datos del usuario    |
-| PATCH	 | Actualiza únicamente los campos enviados |
-
----
-
-# Manejo de errores
-
-La API implementa diferentes códigos de estado HTTP para informar el resultado de las operaciones.
-
-| Código | Significado                         |
-| ------ | ----------------------------------- |
-| `200`  | Solicitud procesada correctamente   |
-| `201`  | Usuario creado correctamente        |
-| `400`  | Datos no válidos o correo duplicado |
-| `404`  | Recurso no encontrado               |
-
-### Usuario inexistente
+Respuesta:
 
 ```json
 {
-    "detail": "Usuario no encontrado"
+  "message": "Usuario eliminado"
 }
 ```
 
-### Correo duplicado
+## Validaciones y errores
 
-Si se intenta registrar un usuario con un correo que ya existe:
+- `200 OK`: consulta o actualización exitosa.
+- `201 Created`: usuario creado correctamente.
+- `400 Bad Request`: una actualización parcial no contiene campos.
+- `404 Not Found`: usuario no encontrado o no hay usuarios que coincidan con los filtros.
+- `409 Conflict`: el correo electrónico ya está registrado.
+- `422 Unprocessable Content`: los datos enviados no cumplen las validaciones.
+
+Reglas principales:
+
+- `name` debe tener entre 3 y 100 caracteres. Los espacios al inicio y al final se eliminan.
+- `email` debe tener un formato válido. Se guardan los correos sin espacios y en minúscula.
+- `role` solo puede ser `admin`, `support` o `user`.
+- `is_active` debe ser booleano.
+- `email` no puede repetirse.
+- El `id` debe ser mayor que cero.
+- Un `PATCH` debe enviar al menos un campo para actualizar.
+
+Ejemplo de correo duplicado:
 
 ```json
 {
-    "detail": "El correo electrónico ya está registrado"
+  "detail": "El correo electrónico ya está registrado"
 }
 ```
 
----
+## Cabeceras de respuesta
 
-# Validación de datos
-
-La validación se realiza utilizando **Pydantic**.
-
-El modelo `UserBase` establece las reglas principales:
-
-```python
-class UserBase(BaseModel):
-    name: str = Field(..., min_length=3)
-    email: EmailStr
-    role: Literal["admin", "support", "user"]
-    is_active: bool
-```
-
-Esto permite garantizar que:
-
-* El nombre tenga mínimo 3 caracteres.
-* El correo tenga un formato válido.
-* El rol corresponda a uno de los valores permitidos.
-* `is_active` sea un valor booleano.
-
----
-
-# Middleware
-
-El proyecto incluye un middleware HTTP en `main.py`.
-
-Este middleware agrega automáticamente dos cabeceras a las respuestas:
+El middleware de `app/main.py` agrega estas cabeceras a las respuestas:
 
 ```text
 X-App-Name: device_systems
 X-API-Version: 1.0
 ```
 
-Estas cabeceras permiten identificar la aplicación y la versión de la API.
+## Estado actual
 
----
+La funcionalidad de usuarios está conectada a SQLite y cuenta con operaciones CRUD. Los modelos y esquemas de cursos e inscripciones están creados como base para futuras funcionalidades, pero sus endpoints aún están pendientes de implementación.
 
-# Almacenamiento de datos
+## Autor
 
-Actualmente el proyecto utiliza una lista de Python como almacenamiento temporal:
-
-```python
-base_datos = [
-    ...
-]
-```
-
-Esto significa que **no existe todavía una base de datos permanente**.
-
-Los usuarios creados mediante la API se mantienen mientras el servidor está ejecutándose. Si la aplicación se reinicia, los nuevos registros se pierden y se recuperan únicamente los usuarios definidos inicialmente en el código.
-
-Para una versión futura del proyecto se podría implementar una base de datos como:
-
-* MySQL.
-* PostgreSQL.
-* SQLite.
-* MongoDB.
-
----
-
-# Pruebas
-
-## Crear usuario
-
-<img src = "images/Crear_Usuario.png">
-<img src = "images/Crear_Respuesta.png">
-
-## Validación de error: nombre con caracteres insuficientes
-
-<img src = "images/Validacion_Caracteres.png">
-<img src = "images/Respuesta_Caracteres.png">
-
-
-## Validacion de error: rol incorrecto
-
-<img src = "images/Rol.png">
-<img src = "images/Rol_Respuesta.png">
-
-
-## Validacion de error: Correo inavlido
-
-<img src = "images/Correo.png">
-<img src = "images/Correo_Respuesta.png">
-
-
-## Validacion de error: correo duplicado
-
-Agregamos un nuevo usuario
-
-<img src = "images/Correo_Duplicado.png">
-<img src = "images/Duplicado_Respuesta.png">
-
-Ejecutamos nuevamente sin cambiar los aparemtros iniciales para comprobar que no se duplique
-
-<img src = "images/Duplicado_Error.png">
-<img src = "images/Error_Correo.png">
-
-
-## Prueba del Get sin ingresar rol ni estado 
-
-<img src = "images/Get.png">
-
-
-## Prueba de Get con rol
-
-<img src = "images/Get_Rol.png">
-<img src = "images/Respuesta_Get.png">
-
-
-## Prueba de Get con estado
-
-<img src = "images/Usuario_Activo.png">
-
-
-## Prueba de Get con estado y rol
-<img src = "images/Rol_Estado.png">
-
-
-## Cabeceras HTTP 
-<img src = "images/HTTP.png">
-
-
-## Obtener usuario por ID
-
-<img src = "images/ID.png">
-
-
-## Prueba de Put: actualizar usuario
-
-<img src = "images/Actualizar.png">
-<img src = "images/Actualizar_Respuesta.png">
-
-
-## Prueba del Patch: actualizar nombre
-
-<img src = "images/Actualizar_Patch.png">
-<img src = "images/Patch_Respuesta.png">
-
-
-## Prueba de Delete
-
-<img src = "images/Delete.png">
-
----
-
-
-# Autor
-
-Aprendiz: Cristian Camilo Pereira Florez
+Cristian Camilo Pereira Florez
 
 Ficha: 3223877
 
-Python FastApi
+Programa: Tecnólogo en Análisis y Desarrollo de Software (ADSO)
 
-Tecnologo en analisis y desarrollo de software ADSO
-
-CTMA - SENA
-
----
+SENA - CTMA

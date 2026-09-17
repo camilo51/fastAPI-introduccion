@@ -2,3 +2,5 @@ fastapi
 uvicorn
 email-validator
 sqlalchemy
+alembic
+dotenv

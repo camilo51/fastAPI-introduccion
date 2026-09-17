@@ -15,6 +15,7 @@ En Windows PowerShell:
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
@@ -22,6 +23,44 @@ La API queda disponible en `http://127.0.0.1:8000`.
 
 - Swagger UI: <http://127.0.0.1:8000/docs>
 - ReDoc: <http://127.0.0.1:8000/redoc>
+
+## Migraciones de la base de datos
+
+El proyecto usa Alembic para controlar los cambios del esquema de SQLite. La
+configuracion de `alembic.ini` usa el archivo `test.db` y las migraciones se
+guardan en `alembic/versions/`.
+
+Ejecuta estos comandos desde la carpeta raiz del proyecto con el entorno
+virtual activado:
+
+```powershell
+# Aplicar todas las migraciones pendientes
+alembic upgrade head
+
+# Consultar la migracion aplicada
+alembic current
+
+# Consultar la ultima migracion disponible
+alembic heads
+```
+
+La migracion actual debe coincidir con `head`. En este proyecto, la migracion
+inicial es `f09018e4711b` (`crear_tablas_iniciales`) y la revision mas reciente
+es `9220ca818e15` (`agregar_columna_created_at_a_users`).
+
+Cuando se modifiquen los modelos, crea y aplica una nueva migracion:
+
+```powershell
+alembic revision --autogenerate -m "descripcion de los cambios"
+alembic upgrade head
+```
+
+`head` es un destino de `upgrade`, no un comando independiente. Para listar
+las revisiones disponibles se usa `alembic heads`.
+
+Si `test.db` es una base de pruebas y queda parcialmente creada, puede
+eliminarse y regenerarse ejecutando `alembic upgrade head` antes de iniciar la
+aplicacion. Esta accion elimina los datos guardados en esa base.
 
 ## Estructura
 

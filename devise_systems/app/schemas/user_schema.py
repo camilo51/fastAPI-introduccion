@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from typing import Literal
 
@@ -32,15 +33,24 @@ class UserBase(BaseModel):
         return value
 
 class UserCreate(UserBase):
-    pass
+    password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def validar_contrasena(cls, value):
+        if len(value) < 8:
+            raise ValueError("La contraseña debe tener mínimo 8 caracteres")
+        return value
 
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    created_at: datetime
 
 class UserUpdate(BaseModel):
     name: str | None = Field(None, min_length=3, max_length=100)
     email: EmailStr | None = None
+    password: str | None = Field(None, min_length=8, max_length=128)
     role: Literal["admin", "support", "user"] | None = None
     is_active: bool | None = None
 
@@ -68,4 +78,14 @@ class UserUpdate(BaseModel):
     def normalizar_email(cls, value):
         if isinstance(value, str):
             return value.strip().lower()
+        return value
+
+    @field_validator("password")
+    @classmethod
+    def validar_contrasena(cls, value):
+        if value is None:
+            return value
+
+        if len(value) < 8:
+            raise ValueError("La contraseña debe tener mínimo 8 caracteres")
         return value

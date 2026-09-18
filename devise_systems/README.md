@@ -89,6 +89,27 @@ La respuesta debe incluir `Access-Control-Allow-Origin` y las cabeceras
 personalizadas se ven al ejecutar cualquier endpoint desde Swagger o un
 frontend permitido.
 
+## Autenticacion HTTP Basic
+
+La API usa autenticacion HTTP Basic para proteger las operaciones de consulta,
+actualizacion y eliminacion de usuarios. No usa tokens ni JWT.
+
+Al crear un usuario con `POST /users/`, se debe enviar una `password` de al
+menos ocho caracteres. La API guarda solo el hash de la contrasena; nunca la
+devuelve en las respuestas.
+
+`POST /users/` queda publico para poder crear el primer usuario. Las rutas
+GET, PUT, PATCH y DELETE requieren autenticacion. En Swagger, selecciona
+**Authorize**, escribe el correo como usuario y la contrasena correspondiente.
+
+Desde una terminal, puedes probar una ruta protegida asi:
+
+```powershell
+curl.exe -u correo@ejemplo.com:contrasena http://127.0.0.1:8000/users/
+```
+
+Para un proyecto publicado, HTTP Basic debe utilizarse siempre junto a HTTPS.
+
 ## Estructura
 
 ```text
@@ -112,7 +133,9 @@ La estructura también se explica en el [README general](../README.md).
 
 Se utiliza SQLite. Al iniciar la aplicación se crea el archivo `test.db` y las tablas registradas en los modelos.
 
-La tabla principal es `users` y contiene: `id`, `name`, `email`, `role` e `is_active`.
+La tabla principal es `users` y contiene: `id`, `name`, `email`, `password_hash`,
+`role`, `is_active` y `created_at`. La fecha `created_at` se asigna
+automaticamente al crear cada usuario.
 
 ![Captura de la base de datos generada](images/Base_Datos.png)
 

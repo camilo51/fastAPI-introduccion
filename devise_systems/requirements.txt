@@ -4,3 +4,4 @@ email-validator
 sqlalchemy
 alembic
 dotenv
+pwdlib[argon2]

@@ -62,6 +62,33 @@ Si `test.db` es una base de pruebas y queda parcialmente creada, puede
 eliminarse y regenerarse ejecutando `alembic upgrade head` antes de iniciar la
 aplicacion. Esta accion elimina los datos guardados en esa base.
 
+## Middleware y CORS
+
+La API incluye un middleware HTTP que se ejecuta en todas las peticiones. Mide
+el tiempo de respuesta, registra en la consola el metodo, la ruta y el estado,
+y agrega estas cabeceras a la respuesta:
+
+- `X-App-Name: device_systems`
+- `X-API-Version: 1.0`
+- `X-Process-Time-Ms`: duracion de la peticion en milisegundos.
+
+Tambien se configura CORS para permitir peticiones desde los frontends locales
+`http://localhost:3000` y `http://localhost:5173`. Se permiten los metodos
+GET, POST, PUT, PATCH, DELETE y OPTIONS, y el navegador puede leer las tres
+cabeceras personalizadas anteriores.
+
+Puedes comprobar CORS desde PowerShell con:
+
+```powershell
+curl.exe -i -X OPTIONS http://127.0.0.1:8000/users/ `
+  -H "Origin: http://localhost:5173" `
+  -H "Access-Control-Request-Method: GET"
+```
+
+La respuesta debe incluir `Access-Control-Allow-Origin` y las cabeceras
+personalizadas se ven al ejecutar cualquier endpoint desde Swagger o un
+frontend permitido.
+
 ## Estructura
 
 ```text
